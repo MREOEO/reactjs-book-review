@@ -1,7 +1,9 @@
 import React from 'react';
-import { Input, Button, Divider, Col } from 'antd';
+import { Input, Button, Divider, Col, message } from 'antd';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
+import Axios from 'axios';
+import { withRouter } from 'react-router-dom';
 
 const Title = styled.div`
   padding-top: 10px;
@@ -104,11 +106,17 @@ const LinkButton = styled(Button)`
   }
 `;
 
-export default class SigninForm extends React.Component {
+class SigninForm extends React.Component {
   _emailInput = React.createRef();
   _passwordInput = React.createRef();
 
+
+  state = {
+    loading : false,
+  };
+
   render() {
+    const { loading } = this.state;
     return (
       <Col
         span={12}
@@ -132,7 +140,7 @@ export default class SigninForm extends React.Component {
           <StyledInput type="password" ref={this._passwordInput} />
         </InputArea>
         <ButtonArea>
-          <StyledButton size="large" loading={false} onClick={this._click}>
+          <StyledButton size="large" loading={loading} onClick={this._click}>
             Sign In
           </StyledButton>
         </ButtonArea>
@@ -159,10 +167,39 @@ export default class SigninForm extends React.Component {
     );
   }
 
-  _click = () => {
-    console.log(
-      this._emailInput.current.state.value,
-      this._passwordInput.current.state.value,
-    );
+  	
+  _click = async () => {
+    const email = this._emailInput.current.state.value;
+    const password = this._passwordInput.current.state.value;
+    const { history } = this.props;
+ 
+    
+    this.setState({
+      loading: true,
+    });
+
+    try {
+      const response = await Axios.post('https://api.marktube.tv/v1/me', {
+        email,
+        password,
+      });
+      console.log(response);
+
+      
+      const token = response.data.token;
+      console.log(token);
+      localStorage.setItem('token', token);
+      history.push('/');
+    } catch (error) {
+      console.log(error.response.data.error);
+      message.error(error.response.data.error);
+      this.setState({
+              loading : false,
+            })
+    }
   };
 }
+
+
+export default withRouter(SigninForm);
+
